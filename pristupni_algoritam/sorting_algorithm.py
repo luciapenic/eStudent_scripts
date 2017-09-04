@@ -4,8 +4,16 @@ import sys
     # OBLIK: ime,prezime,tim1,tim2,tim3 - PRETPOSTAVKA da tako izgleda
 
 # druga datoteka su timovi
-    # OBLIK: tim,broj clanova,popis_svih_prijavljenih_ljudi
-RESULTS = {}
+    # OBLIK: tim,broj clanova,popis_svih_prijavljenih_ljudi # razmisliti o boljem nacinu
+    # mozda koristiti id umisto imena? izbjegli bi problem sa dva imena/dva prezimena i situaciju kada se osobe isto zovu ?
+    # izbjegli bi problem typo-a od strane voditelja - napravili bi dohvat id-a iz baze i odmah vidjeli gdje se potkrala greska
+    # izbjegli bi problem velikog i malog slova
+RESULTS = {
+    'IT':[],
+    'LJP':[],
+    'IC':[]
+}
+
 candidates = {}
 priority_of_teams = []
 teams_priority = {}
@@ -24,33 +32,46 @@ with open(sys.argv[2]) as timovi:
     for line in timovi:
 
         team = line.strip().split(',')[0]
-        members = line.strip().split(',')[1]
+        limit_members = line.strip().split(',')[1]
         priority_of_members = line.strip().split(',')[2:]
 
         teams_priority[team] = priority_of_members
-        number_of_members[team] = members
+        number_of_members[team] = limit_members
 
 
-print(candidates)
+#print(candidates)
 
-added = True
+added = False
+priority = 0
+number_of_loops = 0
 
-for priority in range(3): # prioritet ide od 0 do 2, 0 je najvisi prioritet
+while priority < 4: # prioritet ide od 0 do 2, 0 je najvisi prioritet
+    added = False
     for candidate in candidates.keys():
-        team = candidates[candidate][priority]
-        limit = number_of_members[team]
-        if candidate in teams_priority[:limit]:
+        number_of_loops +=1
+        print(number_of_loops)
+        try:
+            team = candidates[candidate][priority]
+            limit = number_of_members[team]
+        except IndexError:
+            continue
+        if candidate in teams_priority[team][0:int(limit)]:
             RESULTS[team].append(candidate)
-            number_of_members[team] -= 1
-            for i in candidates[candidate]:
-                if candidate in teams_priority[i]:
-                    teams_priority[i].remove(candidate)
-                    added = True
+            number_of_members[team] = str(int(number_of_members[team]) -1)
+
+            #makni kandidata iz lista svih timova!
+            for team in teams_priority:
+                if candidate in teams_priority[team]:
+                    teams_priority[team].remove(candidate)
+            added = True
 
     if added is False:
         if priority == 2:
-            continue
+            break
         else:
             priority += 1
+            print(priority)
 
-    added = False
+    #added = False
+
+print(RESULTS)
